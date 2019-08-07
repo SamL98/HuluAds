@@ -1,0 +1,6 @@
+apktool
+Hulu*
+*.jar
+classes/
+source/
+Hulu*/
