@@ -5,3 +5,5 @@ classes/
 source/
 Hulu*/
 client
+*.swp
+.*.swp
