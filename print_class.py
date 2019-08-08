@@ -1,14 +1,15 @@
 import struct as st
 import sys
 
-def read_uleb128(f):
+def read_uleb128(f, retlen=False):
 	val = 0
 	i = 0
 	while True:
 		b = f.read(1)[0]
 		val |= ((b & 0x7f) << (i*7))
-		if b & 0x80 == 0: break
 		i += 1
+		if b & 0x80 == 0: break
+	if retlen: return val, i
 	return val
 
 def read_string(f, idx):
@@ -85,7 +86,7 @@ def read_encoded_methods(f, base, count):
 	return methods
 
 
-class_name = 'L' + sys.argv[1] + ';'
+class_name = sys.argv[1]
 f = open('client/classes.dex', 'rb')
 
 f.seek(8 + 4 + 20 + 4 + 4 + 4 + 4 + 4 + 4)
@@ -101,19 +102,26 @@ method_ids_off = st.unpack('I', f.read(4))[0]
 class_defs_size = st.unpack('I', f.read(4))[0]
 class_defs_off = st.unpack('I', f.read(4))[0]
 
+found_it = False
+class_def_off = 0
+
 for i in range(class_defs_size):
-	f.seek(class_defs_off + i*32)
+	class_def_off = class_defs_off + i*32
+	f.seek(class_def_off)
 	class_idx = st.unpack('I', f.read(4))[0]
 
 	descriptor_idx = read_descriptor_idx(f, class_idx)
 	type_name = read_string(f, descriptor_idx)
-	if type_name == class_name:
+	if class_name in type_name and not '$' in type_name:
+		found_it = True
 		break
 
-if i == class_defs_size:
+if not found_it:
+	print("Couldn't find class")
 	exit()
 
-f.seek(4 + 4 + 4 + 4 + 4, 1)
+f.seek(class_def_off)
+f.seek(4 + 4 + 4 + 4 + 4 + 4, 1)
 class_data_off = st.unpack('I', f.read(4))[0]
 static_fields_size = read_uleb128(f)
 instance_fields_size = read_uleb128(f)
