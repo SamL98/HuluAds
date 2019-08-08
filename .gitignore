@@ -7,3 +7,5 @@ Hulu*/
 client
 *.swp
 .*.swp
+*.zip
+*.txt
